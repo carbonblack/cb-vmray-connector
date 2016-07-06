@@ -65,6 +65,13 @@ class VMRayProvider(BinaryAnalysisProvider):
         else:
             message = "Potential malware"
 
+        # Check for None in the score
+        if not sample["sample_vti_score"] and message == 'Benign':
+            sample["sample_vti_score"] = 0
+
+        if not sample["sample_vti_score"] and message == 'Potential malware':
+            sample["sample_vti_score"] = 100
+
         LOGGER.debug("Analysis result of sample with ID %u created successfully (message=%s link=%s score=%u)", sample_id, message, sample["sample_webif_url"], sample["sample_vti_score"])
         return AnalysisResult(
             message=message,

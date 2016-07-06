@@ -1,0 +1,7 @@
+recursive-include cbopensource *
+recursive-include root/etc *
+recursive-include root/usr *
+recursive-include scripts
+
+include scripts/cb-vmray-connector
+include cb-vmray-connector.spec

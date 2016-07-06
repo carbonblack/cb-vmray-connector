@@ -1,0 +1,92 @@
+[bridge]
+
+;
+; core configuration options
+;
+
+;
+; listener_port
+; port to listen for incoming feed requests
+;
+listener_port=4001
+
+;
+; listener_address
+; ipv4 address to listen; defaults to 127.0.0.1
+; 0.0.0.0 binds to all interfaces
+;
+listener_address=0.0.0.0
+
+;
+; feed_host
+; the IP address of this machine for Cb to contact with feed requests
+;
+feed_host=127.0.0.1
+
+;
+; binary_filter_query
+; Additional query options to filter only binaries of interest to the VMRay connector
+;
+binary_filter_query=is_executable_image:true -(digsig_publisher:"Microsoft Corporation" and digsig_result:"Signed")
+
+; Concurrency settings
+;
+; The following two parameters control how many concurrent queries will be
+; performed against the VMRay server. The "quick_scan_threads" setting
+; specifies how many threads will be querying the VMRay appliance via
+; file hash at once. The "deep_scan_threads" setting specifies how many
+; full file scans can be actively "in flight" at a given time. The default
+; is that three files can be analyzed in parallel at any given time.
+
+;vmray_quick_scan_threads=1
+;vmray_deep_scan_threads=3
+
+;
+; VMRay API key
+; This key is given to you in the VMRay web interface
+; select Profile -> VMRay API Key to generate your API key and enter it here
+;
+vmray_api_key=
+
+;
+; VMRay URL
+; address of VMRay server
+; this url specifies your on-premises VMRay server
+;
+vmray_server=https://vmray_server.local
+
+;
+; VMRay URL SSL Verification
+; Enter 1 to force ssl verification of the VMRay connection
+;
+vmray_sslverify=1
+
+
+;
+; Carbon Black Enterprise Server options
+;
+
+;
+; Carbon Black Enterprise Server URL
+;
+carbonblack_server_url=https://localhost/
+
+;
+; Carbon Black Enterprise Server API Token
+;
+carbonblack_server_token=
+
+;
+; Carbon Black Enterprise Server SSL Verfication
+;
+carbonblack_server_sslverify=0
+
+
+;
+; debugging options
+;
+
+; debug
+; enables various debug output
+;
+debug=1

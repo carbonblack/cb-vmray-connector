@@ -1,0 +1,35 @@
+The following steps must be taken to build the package:
+
+# install and setup rpmbuild system
+yum install rpm-build
+python setup.py bdist_rpm
+
+# install epel repository
+yum install epel-release
+
+# install pip
+yum install python-pip
+
+# upgrade pip to latest version
+pip install --upgrade pip
+
+# install pyinstaller
+pip install pyinstaller==2.1
+
+# create rpmbuild directories
+mkdir -p ~/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
+echo '%_topdir %(echo $HOME)/rpmbuild' > ~/.rpmmacros
+
+# edit the file /usr/lib/python2.6/site-packages/PyInstaller/utils/misc.py 
+# and put a "return None" line in the check_not_running_as_root function.
+# otherwise pyinstaller will not start as root
+
+# some more dependencies must be installed
+yum install python-cb-integration python-dateutil python-pika
+
+# you can now build the rpm package with
+python setup.py bdist_binaryrpm
+
+# the rpm is in ~/rpmbuild/RPMS/x86_64
+
+#python-cb-integration python-pika

@@ -10,7 +10,7 @@
 # Source function library.
 . /etc/rc.d/init.d/functions
 
-exec="/usr/share/cb/integrations/vmray/cb-vmray-connector"
+exec="/usr/share/cb/integrations/vmray/bin/cb-vmray-connector"
 prog="cb-vmray-connector"
 pidfile="/var/run/cb/integrations/vmray.pid"
 

@@ -1,38 +1,17 @@
-__author__ = "VMRay"
+__author__ = 'jgarman'
 
 from cbopensource.connectors.vmray import __version__
-from distutils import log
+
+from distutils.core import setup
+from distutils.core import Command
 from distutils.command.bdist_rpm import bdist_rpm
-from distutils.core import Command, setup
+
+from distutils import log
 from distutils.file_util import write_file
 from distutils.util import change_root, convert_path
+
 import os
-import subprocess
-
-
-def get_data_files(rootdir):
-    # automatically build list of (dir, [file1, file2, ...],)
-    # for all files under src/root/ (or provided rootdir)
-    results = []
-    for root, dirs, files in os.walk(rootdir):
-        if len(files) > 0:
-            dirname = os.path.relpath(root, rootdir)
-            flist = [os.path.join(root, f) for f in files]
-            results.append(("/%s" % dirname, flist))
-
-    return results
-
-
-DATA_FILES = get_data_files("root")
-DATA_FILES.append(("", ["cb-vmray-connector.spec"]))
-DATA_FILES.append(("", ["scripts/cb-vmray-connector"]))
-
-SCRIPTS = {
-    "cb-vmray-connector": {
-        "spec": "cb-vmray-connector.spec",
-        "dest": "/usr/share/cb/integrations/vmray/cb-vmray-connector"
-    }
-}
+from subprocess import call
 
 
 class bdist_binaryrpm(bdist_rpm):
@@ -45,14 +24,14 @@ class bdist_binaryrpm(bdist_rpm):
         pass
 
     def run(self):
-        sdist = self.reinitialize_command("sdist")
-        self.run_command("sdist")
+        sdist = self.reinitialize_command('sdist')
+        self.run_command('sdist')
         source = sdist.get_archive_files()[0]
         self.copy_file(source, os.path.join(os.getenv("HOME"), "rpmbuild", "SOURCES"))
 
         # Lots TODO here: generate spec file on demand from the rest of this setup.py file, for starters...
         # self._make_spec_file()
-        subprocess.call(["rpmbuild", "-bb", "%s.spec" % self.distribution.get_name()])
+        call(['rpmbuild', '-bb', '%s.spec' % self.distribution.get_name()])
 
 
 """This install_cb plugin will install all data files associated with the
@@ -62,17 +41,17 @@ class install_cb(Command):
     description = "install binary distribution files"
 
     user_options = [
-        ("install-dir=", "d",
+        ('install-dir=', 'd',
          "base directory for installing data files "
          "(default: installation base dir)"),
-        ("root=", None,
+        ('root=', None,
          "install everything relative to this alternate root directory"),
-        ("force", "f", "force installation (overwrite existing files)"),
-        ("record=", None,
+        ('force', 'f', "force installation (overwrite existing files)"),
+        ('record=', None,
          "filename in which to record list of installed files"),
         ]
 
-    boolean_options = ["force"]
+    boolean_options = ['force']
 
     def initialize_options(self):
         self.install_dir = None
@@ -84,10 +63,10 @@ class install_cb(Command):
         self.record = None
 
     def finalize_options(self):
-        self.set_undefined_options("install",
-                                   ("install_data", "install_dir"),
-                                   ("root", "root"),
-                                   ("force", "force"),
+        self.set_undefined_options('install',
+                                   ('install_data', 'install_dir'),
+                                   ('root', 'root'),
+                                   ('force', 'force'),
                                   )
 
     def run(self):
@@ -116,16 +95,16 @@ class install_cb(Command):
                         (out, _) = self.copy_file(data, dir)
                         self.outfiles.append(out)
 
-        for scriptname in SCRIPTS.keys():
-            pathname = SCRIPTS[scriptname]["dest"]
+        for scriptname in scripts.keys():
+            pathname = scripts[scriptname]['dest']
             dir = convert_path(pathname)
             dir = os.path.dirname(dir)
             dir = change_root(self.root, dir)
             self.mkpath(dir)
 
-            data = os.path.join("dist", scriptname)
-            (out, _) = self.copy_file(data, dir, preserve_mode=True)
-            self.outfiles.append(out)
+            data = os.path.join('dist', scriptname)
+            out = self.copy_tree(data, dir, preserve_mode=True)
+            self.outfiles.extend(out)
 
         if self.record:
             outputs = self.get_outputs()
@@ -145,32 +124,54 @@ class install_cb(Command):
         return self.outfiles
 
 
-setup(
-    name="python-cb-vmray-connector",
-    version="1.0",
-    packages=["cbopensource", "cbopensource.connectors", "cbopensource.connectors.vmray"],
+def get_data_files(rootdir):
+    # automatically build list of (dir, [file1, file2, ...],)
+    # for all files under src/root/ (or provided rootdir)
+    results = []
+    for root, dirs, files in os.walk(rootdir):
+        if len(files) > 0:
+            dirname = os.path.relpath(root, rootdir)
+            flist = [os.path.join(root, f) for f in files]
+            results.append(("/%s" % dirname, flist))
 
-    url="https://github.com/carbonblack/cb-vmray-connector",
-    license="MIT",
-    author="Bit9 + Carbon Black Developer Network",
-    author_email="dev-support@bit9.com",
-    description="Connector between Carbon Black and VMRay",
-    data_files=DATA_FILES,
+    return results
+
+data_files = get_data_files("root")
+data_files.append('cb-vmray-connector.spec')
+data_files.append('scripts/cb-vmray-connector')
+scripts = {
+    'cb-vmray-connector': {
+        'spec': 'cb-vmray-connector.spec',
+        'dest': '/usr/share/cb/integrations/vmray/bin/'
+    }
+}
+
+setup(
+    name='python-cb-vmray-connector',
+    version='1.0',
+    packages=['cbopensource', 'cbopensource.connectors', 'cbopensource.connectors.vmray'],
+    url='https://github.com/carbonblack/cb-vmray-connector',
+    license='MIT',
+    author='Bit9 + Carbon Black Developer Network',
+    author_email='dev-support@carbonblack.com',
+    description=
+        'Connector between Carbon Black and vmray',
+    data_files=data_files,
     classifiers=[
-        "Development Status :: 4 - Beta",
+        'Development Status :: 4 - Beta',
 
         # Indicate who your project is intended for
-        "Intended Audience :: Developers",
+        'Intended Audience :: Developers',
 
         # Pick your license as you wish (should match "license" above)
-         "License :: OSI Approved :: MIT License",
+         'License :: OSI Approved :: MIT License',
 
         # Specify the Python versions you support here. In particular, ensure
         # that you indicate whether you support Python 2, Python 3 or both.
-        "Programming Language :: Python :: 2",
-        "Programming Language :: Python :: 2.6",
-        "Programming Language :: Python :: 2.7",
+        'Programming Language :: Python :: 2',
+        'Programming Language :: Python :: 2.6',
+        'Programming Language :: Python :: 2.7',
     ],
-    keywords="carbonblack bit9",
-    cmdclass={"install_cb": install_cb, "bdist_binaryrpm": bdist_binaryrpm}
+    keywords='carbonblack bit9',
+    cmdclass={'install_cb': install_cb, 'bdist_binaryrpm': bdist_binaryrpm}
 )

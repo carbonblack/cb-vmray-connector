@@ -122,7 +122,7 @@ class VMRayProvider(BinaryAnalysisProvider):
             open_jobs = []
             for job in check_jobs:
                 try:
-                    api.call("GET", "/rest/job/%u" % (job["job_id"]))
+                    self.rest_api.call("GET", "/rest/job/%u" % (job["job_id"]))
                 except VMRayRESTAPIError as exc:
                     if exc.status_code == 404:
                         # job has finished

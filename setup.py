@@ -148,7 +148,7 @@ scripts = {
 
 setup(
     name='python-cb-vmray-connector',
-    version='1.0',
+    version='1.1',
     packages=['cbopensource', 'cbopensource.connectors', 'cbopensource.connectors.vmray'],
     url='https://github.com/carbonblack/cb-vmray-connector',
     license='MIT',

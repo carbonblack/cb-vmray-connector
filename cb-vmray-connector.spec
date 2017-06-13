@@ -2,6 +2,8 @@
 a = Analysis(['scripts/cb-vmray-connector'],
              pathex=['.'],
              hiddenimports=['unicodedata'],
+             datas=[ (HOMEPATH + '/cbapi/response/models/*', 'cbapi/response/models/'),
+                     (HOMEPATH + '/cbapi/protection/models/*', 'cbapi/protection/models/') ],
              hookspath=None,
              runtime_hooks=None)
 pyz = PYZ(a.pure)

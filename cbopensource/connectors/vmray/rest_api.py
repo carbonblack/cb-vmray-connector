@@ -81,7 +81,10 @@ class VMRayRESTAPI(object):
                 elif isinstance(value, basestring):
                     req_params[key] = unicode(value)
                 elif isinstance(value, file) or hasattr(value, "read"):
-                    filename = os.path.split(value.name)[1]
+                    try:
+                        filename = os.path.split(value.name)[1]
+                    except:
+                        filename = "file"
                     # For the following block refer to DEV-1820
                     try:
                         filename.decode("ASCII")

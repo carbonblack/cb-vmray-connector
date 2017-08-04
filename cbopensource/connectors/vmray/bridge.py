@@ -144,7 +144,7 @@ class VMRayConnector(DetonationDaemon):
 
     @property
     def integration_name(self):
-        return 'Cb VmRay Connector 1.1.3'
+        return 'Cb VmRay Connector 1.1.4'
 
     @property
     def filter_spec(self):

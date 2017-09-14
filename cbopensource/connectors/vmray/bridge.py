@@ -110,7 +110,12 @@ class VMRayProvider(BinaryAnalysisProvider):
 
         # submit file to VMRay
         try:
-            result = self.rest_api.call("POST", "/rest/sample/submit", params={"archive_action": "ignore", "sample_file": binary_file_stream, "sample_filename_b64enc": base64.encodestring(md5_hash)})
+            result = self.rest_api.call("POST",
+                                        "/rest/sample/submit",
+                                        params={"archive_action": "ignore",
+                                                "sample_file": binary_file_stream,
+                                                "sample_filename_b64enc": base64.encodestring(md5_hash),
+                                                "reanalyze": True})
         except VMRayRESTAPIError as exc:
             LOGGER.debug("Error submitting sample with md5 %s", md5_hash, exc_info=True)
             raise AnalysisTemporaryError(message="API error: %s" % str(exc), retry_in=self.retry_wait_time)

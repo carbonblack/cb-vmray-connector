@@ -62,7 +62,7 @@ class VMRayProvider(BinaryAnalysisProvider):
                 # get all analyses
                 analyses = self.rest_api.call("GET", "/rest/analysis/sample/%u" % (sample_id))
         except BaseException as exc:
-            LOGGER.debug("Error getting sample and analyses info for sample ID %u", sample_id, exc_info=True)
+            LOGGER.debug("Error getting sample and analyses info for sample ID %s", sample_id, exc_info=True)
             raise AnalysisTemporaryError(message="API error: %s" % (str(exc)))
 
         # check if any error occurred

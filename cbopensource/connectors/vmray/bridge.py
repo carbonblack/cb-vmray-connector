@@ -104,6 +104,9 @@ class VMRayProvider(BinaryAnalysisProvider):
             LOGGER.debug("Error submitting sample with md5 %s", md5_hash, exc_info=True)
             raise AnalysisTemporaryError(message="API error: %s" % str(exc), retry_in=self.retry_wait_time)
 
+        if result.get("errors", None):
+            raise AnalysisPermanentError(message="API error: %s" % str(result["errors"][0].get("error_msg","")))
+
         sample_id = result["samples"][0]["sample_id"]
         submission_id = result["submissions"][0]["submission_id"]
 
@@ -144,7 +147,7 @@ class VMRayConnector(DetonationDaemon):
 
     @property
     def integration_name(self):
-        return 'Cb VmRay Connector 1.1.4'
+        return 'Cb VmRay Connector 1.1.5'
 
     @property
     def filter_spec(self):

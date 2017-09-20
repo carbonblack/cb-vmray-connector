@@ -6,7 +6,7 @@ import datetime
 import os.path
 import requests
 import urlparse
-
+from cbint.utils.tls import get_tlsv1_2_session
 
 # disable nasty certification warning
 # pylint: disable=no-member
@@ -60,6 +60,7 @@ class VMRayRESTAPI(object):
         self.server = server
         self.api_key = api_key
         self.verify_cert = verify_cert
+        self.session = get_tlsv1_2_session()
 
     def call(self, http_method, api_path, params=None, raw_data=False):
         """Call VMRay REST API"""
@@ -134,7 +135,10 @@ class VMRayRESTAPI(object):
         # get cached results
         while "continuation_id" in json_result:
             # send request to server
-            result = requests.get("%s/rest/continuation/%u" % (self.server, json_result["continuation_id"]), headers={"Authorization": "api_key " + self.api_key}, verify=self.verify_cert)
+
+            result = self.session.get("%s/rest/continuation/%u" % (self.server, json_result["continuation_id"]),
+                                      headers={"Authorization": "api_key " + self.api_key},
+                                      verify=self.verify_cert)
             handle_rest_api_result(result)
 
             # parse result

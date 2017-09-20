@@ -39,20 +39,31 @@ class VMRayProvider(BinaryAnalysisProvider):
     def create_result(self, sample_id, submission_id=None):
         """Create Carbon Black result for the given sample"""
 
-        LOGGER.debug("Creating result for sample with ID %u (submission_id=%s)", sample_id, submission_id)
         try:
-            # get sample
             sample = self.rest_api.call("GET", "/rest/sample/%u" % (sample_id))
+            if submission_id is not None:
+                LOGGER.debug("Creating result for sample with ID %u (submission_id=%s)", sample_id, submission_id)
+                submission = self.rest_api.call("GET", "/rest/submission/%u" % (submission_id))
+                if "submission_finished" in submission:
+                    # new way
+                    if submission["submission_finished"]:
+                        analyses = self.rest_api.call("GET", "/rest/analysis/submission/%u" % (submission_id))
+                    else:
+                        raise AnalysisTemporaryError(message="API error: Submission ID %u not finished yet" % (submission_id), retry_in=self.retry_wait_time)
 
-            # get analyses
-            analyses = self.rest_api.call("GET", "/rest/analysis/sample/%u" % (sample_id))
+                else:
+                    # deprecated old way
+                    # get analyses
+                    analyses = self.rest_api.call("GET", "/rest/analysis/sample/%u" % (sample_id))
+                    # filter by submission_id
+                    analyses = [analysis for analysis in analyses if analysis["analysis_submission_id"] == submission_id]
+            else:
+                LOGGER.debug("Creating result for sample with ID %u", sample_id)
+                # get all analyses
+                analyses = self.rest_api.call("GET", "/rest/analysis/sample/%u" % (sample_id))
         except BaseException as exc:
-            LOGGER.debug("Error getting sample and analyses info for sample ID %u", sample_id, exc_info=True)
+            LOGGER.debug("Error getting sample and analyses info for sample ID %s", sample_id, exc_info=True)
             raise AnalysisTemporaryError(message="API error: %s" % (str(exc)))
-
-        if submission_id is not None:
-            # filter by submission ID
-            analyses = [analysis for analysis in analyses if analysis["analysis_submission_id"] == submission_id]
 
         # check if any error occurred
         for analysis in analyses:
@@ -99,7 +110,12 @@ class VMRayProvider(BinaryAnalysisProvider):
 
         # submit file to VMRay
         try:
-            result = self.rest_api.call("POST", "/rest/sample/submit", params={"archive_action": "ignore", "sample_file": binary_file_stream, "sample_filename_b64enc": base64.encodestring(md5_hash)})
+            result = self.rest_api.call("POST",
+                                        "/rest/sample/submit",
+                                        params={"archive_action": "ignore",
+                                                "sample_file": binary_file_stream,
+                                                "sample_filename_b64enc": base64.encodestring(md5_hash),
+                                                "reanalyze": True})
         except VMRayRESTAPIError as exc:
             LOGGER.debug("Error submitting sample with md5 %s", md5_hash, exc_info=True)
             raise AnalysisTemporaryError(message="API error: %s" % str(exc), retry_in=self.retry_wait_time)
@@ -113,31 +129,47 @@ class VMRayProvider(BinaryAnalysisProvider):
         LOGGER.debug("Waiting for submission with ID %u to finish all jobs", submission_id)
 
         # wait until all analyses have finished
-        open_jobs = list(result["jobs"])
-        wait_start = time.time()
-        while len(open_jobs) > 0:
-            # check for timeout
-            if (time.time() - wait_start) > self.max_analysis_wait_time:
-                LOGGER.debug("Timed out waiting for result of submission with ID %u", submission_id)
-                raise AnalysisTemporaryError(message="Timed out waiting for analysis jobs to finish for submission %u" % (submission_id), retry_in=self.retry_wait_time)
-
-            check_jobs = list(open_jobs)
-            open_jobs = []
-            for job in check_jobs:
+        if "submission_finished" in result["submissions"][0]:
+            wait_start = time.time()
+            while True:
+                time.sleep(self.loop_wait_time)
+                if (time.time() - wait_start) > self.max_analysis_wait_time:
+                    LOGGER.debug("Timed out waiting for result of submission with ID %u", submission_id)
+                    raise AnalysisTemporaryError(message="Timed out waiting for analysis jobs to finish for submission %u" % (submission_id), retry_in=self.retry_wait_time)
                 try:
-                    self.rest_api.call("GET", "/rest/job/%u" % (job["job_id"]))
-                except VMRayRESTAPIError as exc:
-                    if exc.status_code == 404:
-                        # job has finished
-                        continue
+                    submission = self.rest_api.call("GET", "/rest/submission/%u" % (submission_id))
+                except:
+                    LOGGER.debug("Could not get submission ID %u", submission_id)
+                    continue
+                if submission.get("submission_finished", False):
+                    break
+        else:
+            # old method
+            open_jobs = list(result["jobs"])
+            wait_start = time.time()
+            while len(open_jobs) > 0:
+                # check for timeout
+                if (time.time() - wait_start) > self.max_analysis_wait_time:
+                    LOGGER.debug("Timed out waiting for result of submission with ID %u", submission_id)
+                    raise AnalysisTemporaryError(message="Timed out waiting for analysis jobs to finish for submission %u" % (submission_id), retry_in=self.retry_wait_time)
 
-                # job is still there or server is unreachable
-                open_jobs.append(job)
+                check_jobs = list(open_jobs)
+                open_jobs = []
+                for job in check_jobs:
+                    try:
+                        self.rest_api.call("GET", "/rest/job/%u" % (job["job_id"]))
+                    except VMRayRESTAPIError as exc:
+                        if exc.status_code == 404:
+                            # job has finished
+                            continue
 
-            if len(open_jobs) == 0:
-                break
+                    # job is still there or server is unreachable
+                    open_jobs.append(job)
 
-            time.sleep(self.loop_wait_time)
+                if len(open_jobs) == 0:
+                    break
+
+                time.sleep(self.loop_wait_time)
 
         LOGGER.debug("All jobs for submission with ID %u have finished", submission_id)
         return self.create_result(sample_id, submission_id=submission_id)

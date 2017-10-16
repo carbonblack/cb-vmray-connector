@@ -179,7 +179,7 @@ class VMRayConnector(DetonationDaemon):
 
     @property
     def integration_name(self):
-        return 'Cb VmRay Connector 1.1.6'
+        return 'Cb VmRay Connector 1.1.7'
 
     @property
     def filter_spec(self):

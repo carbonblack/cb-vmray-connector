@@ -152,7 +152,7 @@ setup(
     packages=['cbopensource', 'cbopensource.connectors', 'cbopensource.connectors.vmray'],
     url='https://github.com/carbonblack/cb-vmray-connector',
     license='MIT',
-    author='Bit9 + Carbon Black Developer Network',
+    author='Carbon Black Developer Network',
     author_email='dev-support@carbonblack.com',
     description=
         'Connector between Carbon Black and vmray',

@@ -13,6 +13,7 @@ DEF_VTI_SCORE_THRESHOLD = 50
 DEF_MAX_ANALYSIS_WAIT_TIME = 60 * 60
 DEF_RETRY_WAIT_TIME = 120
 DEF_LOOP_WAIT_TIME = 5
+MAX_JOBS = 1
 
 
 class VMRayProvider(BinaryAnalysisProvider):
@@ -26,6 +27,7 @@ class VMRayProvider(BinaryAnalysisProvider):
             max_analysis_wait_time=DEF_MAX_ANALYSIS_WAIT_TIME,
             retry_wait_time=DEF_RETRY_WAIT_TIME,
             loop_wait_time=DEF_LOOP_WAIT_TIME,
+            max_jobs=1
         ):
         super(VMRayProvider, self).__init__(name)
 
@@ -35,6 +37,7 @@ class VMRayProvider(BinaryAnalysisProvider):
         self.max_analysis_wait_time = max_analysis_wait_time
         self.retry_wait_time = retry_wait_time
         self.loop_wait_time = loop_wait_time
+        self.max_jobs = max_jobs
 
     def create_result(self, sample_id, submission_id=None):
         """Create Carbon Black result for the given sample"""
@@ -83,6 +86,17 @@ class VMRayProvider(BinaryAnalysisProvider):
         if not sample["sample_vti_score"] and message == 'Potential malware':
             sample["sample_vti_score"] = 100
 
+        #
+        # Override if sample_severity is blacklisted or malicious
+        #
+        if sample['sample_severity'].lower() == "blacklisted":
+            sample["sample_vti_score"] = 100
+            message = "blacklisted"
+
+        elif sample['sample_severity'].lower() == "malicious":
+            sample["sample_vti_score"] = 100
+            message = "malicious"
+
         LOGGER.debug("Analysis result of sample with ID %u created successfully (message=%s link=%s score=%u)", sample_id, message, sample["sample_webif_url"], sample["sample_vti_score"])
         return AnalysisResult(
             message=message,
@@ -109,13 +123,16 @@ class VMRayProvider(BinaryAnalysisProvider):
         LOGGER.info("Submitting binary with md5 %s to VMRay" % (md5_hash))
 
         # submit file to VMRay
+
+        LOGGER.info("max_jobs:{}".format(self.max_jobs))
         try:
             result = self.rest_api.call("POST",
                                         "/rest/sample/submit",
                                         params={"archive_action": "ignore",
                                                 "sample_file": binary_file_stream,
                                                 "sample_filename_b64enc": base64.encodestring(md5_hash),
-                                                "reanalyze": True})
+                                                "reanalyze": True,
+                                                "max_jobs": self.max_jobs})
         except VMRayRESTAPIError as exc:
             LOGGER.debug("Error submitting sample with md5 %s", md5_hash, exc_info=True)
             raise AnalysisTemporaryError(message="API error: %s" % str(exc), retry_in=self.retry_wait_time)
@@ -179,7 +196,7 @@ class VMRayConnector(DetonationDaemon):
 
     @property
     def integration_name(self):
-        return 'Cb VmRay Connector 1.1.7'
+        return 'Cb VmRay Connector 1.1.8'
 
     @property
     def filter_spec(self):
@@ -211,6 +228,7 @@ class VMRayConnector(DetonationDaemon):
             max_analysis_wait_time=self.vmray_max_analysis_wait_time,
             retry_wait_time=self.vmray_retry_wait_time,
             loop_wait_time=self.vmray_loop_wait_time,
+            max_jobs = self.vmray_max_jobs
         )
 
     def get_metadata(self):
@@ -235,6 +253,7 @@ class VMRayConnector(DetonationDaemon):
         self.vmray_retry_wait_time = self.get_config_integer("vmray_retry_wait_time", DEF_RETRY_WAIT_TIME)
         self.vmray_loop_wait_time = self.get_config_integer("vmray_loop_wait_time", DEF_LOOP_WAIT_TIME)
         self.vmray_vti_score_threshold = self.get_config_integer("vmray_vti_score_threshold", DEF_VTI_SCORE_THRESHOLD)
+        self.vmray_max_jobs = self.get_config_integer("vmray_max_jobs",MAX_JOBS)
         return True
 
 

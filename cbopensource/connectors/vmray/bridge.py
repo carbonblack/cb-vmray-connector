@@ -123,8 +123,6 @@ class VMRayProvider(BinaryAnalysisProvider):
         LOGGER.info("Submitting binary with md5 %s to VMRay" % (md5_hash))
 
         # submit file to VMRay
-
-        LOGGER.info("max_jobs:{}".format(self.max_jobs))
         try:
             result = self.rest_api.call("POST",
                                         "/rest/sample/submit",

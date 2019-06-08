@@ -19,7 +19,7 @@ listener_address=0.0.0.0
 
 ;
 ; feed_host
-; the IP address of this machine for Cb to contact with feed requests
+; the IP address of this machine for CB Response to contact with feed requests
 ;
 feed_host=127.0.0.1
 
@@ -56,7 +56,7 @@ vmray_api_key=
 ;
 ; VMRay URL
 ; address of VMRay server
-; this url specifies your on-premises VMRay server
+; this url specifies your VMRay server address
 ;
 vmray_server=https://vmray_server.local
 
@@ -68,20 +68,20 @@ vmray_sslverify=1
 
 
 ;
-; Carbon Black Enterprise Server options
+; Carbon Black Response Server options
 ;
 
 ;
-; Carbon Black Enterprise Server URL
+; Carbon Black Response Server URL
 ;
 carbonblack_server_url=https://localhost/
 
 ;
-; Carbon Black Enterprise Server API Token
+; Carbon Black Response Server API Token
 ;
 carbonblack_server_token=
 
 ;
-; Carbon Black Enterprise Server SSL Verfication
+; Carbon Black Response Server SSL Verfication
 ;
 carbonblack_server_sslverify=0

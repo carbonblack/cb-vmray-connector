@@ -233,7 +233,7 @@ class VMRayConnector(DetonationDaemon):
         return generate_feed(
             self.name,
             summary="VMRay Detonation Analysis",
-            tech_data="An on-premises VMRay server is required to use this feed. There are no requirements to share any data with Carbon Black to use this feed.",
+            tech_data=“This integration works with VMRay Analyzer on-prem or VMRay Analyzer Cloud. There are no requirements to share any data with Carbon Black to use this feed.",
             provider_url="http://www.vmray.com",
             icon_path="/usr/share/cb/integrations/vmray/vmray-logo.png",
             display_name="VMRay",
